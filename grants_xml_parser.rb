@@ -58,6 +58,17 @@ end
 
 if __FILE__ == $0
   require 'minitest/autorun'
+  require 'set'
+
+  # open Enumerable module to add histogram method to aid sanity check
+  # of grants.gov XML extract
+  module ::Enumerable
+    def histogram
+      histo = Hash.new {0}
+      self.each {|element| histo[element] += 1 }
+      histo
+    end
+  end
 
   class GrantsXmlParserTest < Minitest::Test
     def get_parser
@@ -65,7 +76,7 @@ if __FILE__ == $0
     end
 
     def get_synopses
-      @@synopses = get_parser.funding_opportunity_synopses
+      @@synopses ||= get_parser.funding_opportunity_synopses
     end
 
     def test_initialize
@@ -85,8 +96,89 @@ if __FILE__ == $0
     def test_first_synopsis_nodenames
       syn = get_synopses[0]
       nodenames = GrantsXmlParser.synopsis_nodenames(syn)
-      assert_equal ["PostDate", "UserID", "Password", "FundingInstrumentType", "FundingActivityCategory", "FundingActivityCategory", "FundingActivityCategory", "OtherCategoryExplanation", "NumberOfAwards", "EstimatedFunding", "AwardCeiling", "AwardFloor", "AgencyMailingAddress", "FundingOppTitle", "FundingOppNumber", "ApplicationsDueDate", "ApplicationsDueDateExplanation", "ArchiveDate", "Location", "Office", "Agency", "FundingOppDescription", "CFDANumber", "EligibilityCategory", "AdditionalEligibilityInfo", "CostSharing", "ObtainFundingOppText", "AgencyContact"], nodenames
+      assert_equal all_nodes, nodenames.sort
+    end
+
+    def test_duplicate_nodenames
+      # array of non-trivial histograms
+      nontrivials = []
+      get_synopses.each do |syn|
+        nodenames = GrantsXmlParser.synopsis_nodenames(syn)
+        histogram = nodenames.histogram
+        multiples = histogram.select {|node, count| count > 1}
+        nontrivials << multiples if multiples.size > 1
+      end
+
+      # extract unique nodes, compare to what's known to be repeating
+      nodenames = nontrivials.collect {|histo| histo.keys}
+                  .flatten.uniq.sort
+      assert_equal repeated_nodes, nodenames
+    end
+
+    def test_unique_nodenames
+      repeats = Set.new
+      uniques = Set.new
+      get_synopses.each do |syn|
+        nodenames = GrantsXmlParser.synopsis_nodenames(syn)
+        histogram = nodenames.histogram
+
+        # cycle thru each histogram to determine
+        histogram.each do |name, count|
+          if count == 1
+            uniques << name unless repeats.include?(name)
+          elsif count > 1
+            repeats << name
+            uniques.delete(name)
+          end
+        end
+      end
+
+      assert_equal repeated_nodes, repeats.sort
+      assert_equal all_nodes - repeated_nodes, uniques.sort
+    end
+
+    def repeated_nodes
+      %w(
+        CFDANumber
+        EligibilityCategory
+        FundingActivityCategory
+        FundingInstrumentType
+      )
+    end
+
+    def all_nodes
+      %w(
+        AdditionalEligibilityInfo
+        Agency
+        AgencyContact
+        AgencyMailingAddress
+        ApplicationsDueDate
+        ApplicationsDueDateExplanation
+        ArchiveDate
+        AwardCeiling
+        AwardFloor
+        CFDANumber
+        CostSharing
+        EligibilityCategory
+        EstimatedFunding
+        FundingActivityCategory
+        FundingActivityCategory
+        FundingActivityCategory
+        FundingInstrumentType
+        FundingOppDescription
+        FundingOppNumber
+        FundingOppTitle
+        Location
+        NumberOfAwards
+        ObtainFundingOppText
+        Office
+        OtherCategoryExplanation
+        Password
+        PostDate
+        UserID
+      )
     end
   end
 
 end
+
