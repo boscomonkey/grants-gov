@@ -17,7 +17,7 @@ doc -> Nokogiri::XML::Document
         "01302008"	elt.text
 
 =end
-class GrantsXml
+class GrantsXmlParser
 
   def initialize(xml_fname)
     File.open(xml_fname) {|f| @doc = Nokogiri::XML(f) }
@@ -41,17 +41,17 @@ end
 if __FILE__ == $0
   require 'minitest/autorun'
 
-  class GrantsXmlTest < Minitest::Test
-    def get_grants
-      @@grants ||= GrantsXml.new('GrantsDBExtract20150105.xml')
+  class GrantsXmlParserTest < Minitest::Test
+    def get_parser
+      @@parser ||= GrantsXmlParser.new('GrantsDBExtract20150105.xml')
     end
 
     def get_synopses
-      @@synopses = get_grants.synopses
+      @@synopses = get_parser.synopses
     end
 
     def test_initialize
-      refute_nil get_grants
+      refute_nil get_parser
     end
 
     def test_synopses
@@ -59,13 +59,13 @@ if __FILE__ == $0
     end
 
     def test_first_synopsis
-      syn = get_grants.synopsis(0)
+      syn = get_parser.synopsis(0)
       assert_instance_of Nokogiri::XML::Element, syn
       assert_equal 57, syn.children.size
     end
 
     def test_first_synopsis_nodenames
-      elts = get_grants.synopsis_elements(0)
+      elts = get_parser.synopsis_elements(0)
       nodenames = elts.collect {|elt| elt.node_name}
       assert_equal ["PostDate", "UserID", "Password", "FundingInstrumentType", "FundingActivityCategory", "FundingActivityCategory", "FundingActivityCategory", "OtherCategoryExplanation", "NumberOfAwards", "EstimatedFunding", "AwardCeiling", "AwardFloor", "AgencyMailingAddress", "FundingOppTitle", "FundingOppNumber", "ApplicationsDueDate", "ApplicationsDueDateExplanation", "ArchiveDate", "Location", "Office", "Agency", "FundingOppDescription", "CFDANumber", "EligibilityCategory", "AdditionalEligibilityInfo", "CostSharing", "ObtainFundingOppText", "AgencyContact"], nodenames
     end
