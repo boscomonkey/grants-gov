@@ -9,31 +9,49 @@ require 'nokogiri'
 =begin
 
 doc -> Nokogiri::XML::Document
-  synopsis -> Nokogiri::XML::NodeSet	doc.xpath('FundingOppSynopsis')
-    first -> Nokogiri::XML::Element	synopsis[0]
-      txt -> Nokogiri::XML::Text	first.children[0]
-      elt  -> Nokogiri::XML::Element	first.children[1]
+  synopses -> Nokogiri::XML::NodeSet	doc.xpath('FundingOppSynopsis')
+    synopsis -> Nokogiri::XML::Element	synopses[0]
+      txt -> Nokogiri::XML::Text	synopsis.children[0]
+      elt  -> Nokogiri::XML::Element	synopsis.children[1]
         "PostDate"	elt.node_name
         "01302008"	elt.text
 
+EXAMPLE USAGE:
+
+parser = GrantsXmlParser.new('example.xml')
+synopses = parser.funding_opportunity_synopses		# NodeSet
+synopsis = synopses[0]
+duples = GrantsXmlParser.synopsis_node_value_pairs(synopsis)
+names = GrantsXmlParser.synopsis_nodenames(synopsis)
+
 =end
 class GrantsXmlParser
+
+  class << self
+    # Return array of XML::Element nodes (ignoring Text nodes)
+    def synopsis_elements(syn)
+      syn.children.select {|node| node.class == Nokogiri::XML::Element }
+    end
+
+    # Return array of node-value pairs for each XML::Element in
+    # syn
+    def synopsis_node_value_pairs(syn)
+      synopsis_elements(syn).collect {|node| [node.node_name, node.text] }
+    end
+
+    # Convenience method returns array of node names for all the
+    # XML::Element children in syn
+    def synopsis_nodenames(syn)
+      synopsis_elements(syn).collect {|node| node.node_name }
+    end
+  end
 
   def initialize(xml_fname)
     File.open(xml_fname) {|f| @doc = Nokogiri::XML(f) }
   end
 
-  def synopses
+  def funding_opportunity_synopses
     @doc.xpath('//FundingOppSynopsis')
-  end
-
-  def synopsis(nth)
-    synopses[nth]
-  end
-
-  def synopsis_elements(nth)
-    syn = synopsis(nth)
-    syn.children.select {|node| node.class == Nokogiri::XML::Element}
   end
 
 end
@@ -47,7 +65,7 @@ if __FILE__ == $0
     end
 
     def get_synopses
-      @@synopses = get_parser.synopses
+      @@synopses = get_parser.funding_opportunity_synopses
     end
 
     def test_initialize
@@ -55,18 +73,18 @@ if __FILE__ == $0
     end
 
     def test_synopses
-      assert_equal 19211, get_synopses.size
+      assert get_synopses.size >= 19211
     end
 
     def test_first_synopsis
-      syn = get_parser.synopsis(0)
+      syn = get_synopses[0]
       assert_instance_of Nokogiri::XML::Element, syn
       assert_equal 57, syn.children.size
     end
 
     def test_first_synopsis_nodenames
-      elts = get_parser.synopsis_elements(0)
-      nodenames = elts.collect {|elt| elt.node_name}
+      syn = get_synopses[0]
+      nodenames = GrantsXmlParser.synopsis_nodenames(syn)
       assert_equal ["PostDate", "UserID", "Password", "FundingInstrumentType", "FundingActivityCategory", "FundingActivityCategory", "FundingActivityCategory", "OtherCategoryExplanation", "NumberOfAwards", "EstimatedFunding", "AwardCeiling", "AwardFloor", "AgencyMailingAddress", "FundingOppTitle", "FundingOppNumber", "ApplicationsDueDate", "ApplicationsDueDateExplanation", "ArchiveDate", "Location", "Office", "Agency", "FundingOppDescription", "CFDANumber", "EligibilityCategory", "AdditionalEligibilityInfo", "CostSharing", "ObtainFundingOppText", "AgencyContact"], nodenames
     end
   end
