@@ -99,23 +99,7 @@ if __FILE__ == $0
       assert_equal all_nodes, nodenames.sort
     end
 
-    def test_duplicate_nodenames
-      # array of non-trivial histograms
-      nontrivials = []
-      get_synopses.each do |syn|
-        nodenames = GrantsXmlParser.synopsis_nodenames(syn)
-        histogram = nodenames.histogram
-        multiples = histogram.select {|node, count| count > 1}
-        nontrivials << multiples if multiples.size > 1
-      end
-
-      # extract unique nodes, compare to what's known to be repeating
-      nodenames = nontrivials.collect {|histo| histo.keys}
-                  .flatten.uniq.sort
-      assert_equal repeated_nodes, nodenames
-    end
-
-    def test_unique_nodenames
+    def test_nodenames_uniqueness
       repeats = Set.new
       uniques = Set.new
       get_synopses.each do |syn|
