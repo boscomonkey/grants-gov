@@ -54,6 +54,9 @@ class GrantsXmlParser
     @doc.xpath('//FundingOppSynopsis')
   end
 
+  def funding_opportunity_modifications
+    @doc.xpath('//FundingOppModSynopsis')
+  end
 end
 
 if __FILE__ == $0
@@ -75,6 +78,10 @@ if __FILE__ == $0
       @@parser ||= GrantsXmlParser.new('GrantsDBExtract.xml')
     end
 
+    def get_modifications
+      @@modifications ||= get_parser.funding_opportunity_modifications
+    end
+
     def get_synopses
       @@synopses ||= get_parser.funding_opportunity_synopses
     end
@@ -83,8 +90,18 @@ if __FILE__ == $0
       refute_nil get_parser
     end
 
+    def test_modifications
+      assert get_modifications.size >= 10586
+    end
+
     def test_synopses
       assert get_synopses.size >= 19211
+    end
+
+    def test_first_mod
+      mod = get_modifications[0]
+      assert_instance_of Nokogiri::XML::Element, mod
+      assert_equal 81, mod.children.size
     end
 
     def test_first_synopsis
@@ -93,10 +110,22 @@ if __FILE__ == $0
       assert_equal 57, syn.children.size
     end
 
-    def test_first_synopsis_nodenames
-      syn = get_synopses[0]
+    def test_modification_nodenames
+      assert_synopsis_nodenames(get_modifications[0])
+    end
+
+    def test_opportunity_nodenames
+      assert_synopsis_nodenames(get_synopses[0])
+    end
+
+    def assert_synopsis_nodenames(syn)
       nodenames = GrantsXmlParser.synopsis_nodenames(syn)
-      assert_equal all_nodes, nodenames.sort
+
+      expected = all_nodes.sort.uniq
+      actual = nodenames.sort.uniq
+
+      assert_equal [], expected-actual, 'fewer nodenames than expected'
+      assert_equal [], actual-expected, 'more nodenames than expected'
     end
 
     def test_nodenames_uniqueness
@@ -133,20 +162,18 @@ if __FILE__ == $0
     def all_nodes
       [
         "AdditionalEligibilityInfo",
-        "Agency",
-        "AgencyContact",
-        "AgencyMailingAddress",
+        "Agency",			# 39 values including "None"
+        "AgencyContact",		# data only in attributes
+        "AgencyMailingAddress",		# data also in attr FundingOppURL
         "ApplicationsDueDate",
         "ApplicationsDueDateExplanation",
-        "ArchiveDate",
+        "ArchiveDate",			# mmddyyyy
         "AwardCeiling",
         "AwardFloor",
         "CFDANumber",
         "CostSharing",
         "EligibilityCategory",
         "EstimatedFunding",
-        "FundingActivityCategory",
-        "FundingActivityCategory",
         "FundingActivityCategory",
         "FundingInstrumentType",
         "FundingOppDescription",
