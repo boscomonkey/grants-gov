@@ -72,7 +72,7 @@ if __FILE__ == $0
 
   class GrantsXmlParserTest < Minitest::Test
     def get_parser
-      @@parser ||= GrantsXmlParser.new('GrantsDBExtract20150105.xml')
+      @@parser ||= GrantsXmlParser.new('GrantsDBExtract.xml')
     end
 
     def get_synopses
@@ -122,45 +122,45 @@ if __FILE__ == $0
     end
 
     def repeated_nodes
-      %w(
-        CFDANumber
-        EligibilityCategory
-        FundingActivityCategory
-        FundingInstrumentType
-      )
+      [
+        "CFDANumber",
+        "EligibilityCategory",
+        "FundingActivityCategory",
+        "FundingInstrumentType",
+      ]
     end
 
     def all_nodes
-      %w(
-        AdditionalEligibilityInfo
-        Agency
-        AgencyContact
-        AgencyMailingAddress
-        ApplicationsDueDate
-        ApplicationsDueDateExplanation
-        ArchiveDate
-        AwardCeiling
-        AwardFloor
-        CFDANumber
-        CostSharing
-        EligibilityCategory
-        EstimatedFunding
-        FundingActivityCategory
-        FundingActivityCategory
-        FundingActivityCategory
-        FundingInstrumentType
-        FundingOppDescription
-        FundingOppNumber
-        FundingOppTitle
-        Location
-        NumberOfAwards
-        ObtainFundingOppText
-        Office
-        OtherCategoryExplanation
-        Password
-        PostDate
-        UserID
-      )
+      [
+        "AdditionalEligibilityInfo",
+        "Agency",
+        "AgencyContact",
+        "AgencyMailingAddress",
+        "ApplicationsDueDate",
+        "ApplicationsDueDateExplanation",
+        "ArchiveDate",
+        "AwardCeiling",
+        "AwardFloor",
+        "CFDANumber",
+        "CostSharing",
+        "EligibilityCategory",
+        "EstimatedFunding",
+        "FundingActivityCategory",
+        "FundingActivityCategory",
+        "FundingActivityCategory",
+        "FundingInstrumentType",
+        "FundingOppDescription",
+        "FundingOppNumber",
+        "FundingOppTitle",
+        "Location",
+        "NumberOfAwards",
+        "ObtainFundingOppText",
+        "Office",
+        "OtherCategoryExplanation",
+        "Password",
+        "PostDate",
+        "UserID",
+      ]
     end
   end
 
